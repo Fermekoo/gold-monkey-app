@@ -1,0 +1,28 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "gold_monkey",
+            "cwd": "gold_monkey",
+            "request": "launch",
+            "type": "dart"
+        },
+        {
+            "name": "gold_monkey (profile mode)",
+            "cwd": "gold_monkey",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "profile"
+        },
+        {
+            "name": "gold_monkey (release mode)",
+            "cwd": "gold_monkey",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "release"
+        }
+    ]
+}
