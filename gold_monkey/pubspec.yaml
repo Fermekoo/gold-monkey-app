@@ -16,7 +16,8 @@ dependencies:
   dio_cookie_manager: ^3.3.0
   cookie_jar: ^4.0.8
   path_provider: ^2.1.5
-
+  qr_flutter: ^4.1.0
+  
 dev_dependencies:
   flutter_test:
     sdk: flutter

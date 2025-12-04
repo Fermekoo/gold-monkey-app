@@ -10,10 +10,11 @@ class UserModel {
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
+    final userData = json['data'] ?? json;
     return UserModel(
-      username: json["username"] ?? "Uknown user",
-      email: json["emaill"] ?? "-",
-      avaURL: json["avatar"] ?? "https://i.pravatar.cc/300"
+      username: userData["username"] ?? "Uknown user",
+      email: userData["email"] ?? "-",
+      avaURL: userData["avatar"] ?? "https://i.pravatar.cc/300"
     );
   }
 }

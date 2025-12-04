@@ -107,7 +107,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                         ),
                                       ),
                                     );
-                                    // TODO: navigasi ke login Screen
+                                    Navigator.pop(context);
                                   } else {
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(

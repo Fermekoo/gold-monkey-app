@@ -28,4 +28,11 @@ class ProfileViewmodel extends ChangeNotifier{
       notifyListeners();
     }
   }
+
+  Future<void> logout() async {
+    await _authService.logout();
+
+    _user = null;
+    notifyListeners();
+  }
 }

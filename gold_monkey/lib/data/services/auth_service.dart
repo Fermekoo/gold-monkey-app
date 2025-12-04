@@ -3,9 +3,11 @@ import 'dart:io';
 import 'package:cookie_jar/cookie_jar.dart';
 import 'package:dio/dio.dart';
 import 'package:dio_cookie_manager/dio_cookie_manager.dart';
+import 'package:gold_monkey/data/models/deposit_model.dart';
 import 'package:gold_monkey/data/models/login_model.dart';
 import 'package:gold_monkey/data/models/register_model.dart';
 import 'package:gold_monkey/data/models/user_model.dart';
+import 'package:gold_monkey/data/models/wallet_model.dart';
 import 'package:path_provider/path_provider.dart';
 
 class AuthService {
@@ -17,10 +19,7 @@ class AuthService {
   AuthService._internal();
 
   String get baseUrl {
-    if (Platform.isAndroid) {
-      return "http://10.0.2.2:8080";
-    }
-    return "http://127.0.0.1:8080";
+    return "https://gold.inspirapustaka.com";
   }
 
   Future<void> init() async {
@@ -35,21 +34,27 @@ class AuthService {
 
     _dio.interceptors.add(CookieManager(_cookieJar!));
 
-    _dio.interceptors.add(LogInterceptor(requestBody: true, responseBody: true));
+    _dio.interceptors.add(
+      LogInterceptor(
+        requestBody: true,
+        responseBody: true,
+      ),
+    );
   }
 
-  Future<bool> register(RegisterRequest request) async{
+  Future<bool> register(RegisterRequest request) async {
+    await init();
     try {
       final response = await _dio.post(
         '$baseUrl/v1/register',
         data: request.toJson(),
         options: Options(
           sendTimeout: const Duration(seconds: 20),
-          receiveTimeout: const Duration(seconds: 20)
-        )
+          receiveTimeout: const Duration(seconds: 20),
+        ),
       );
       return response.statusCode == 200 || response.statusCode == 201;
-    } on DioException catch(e) {
+    } on DioException catch (e) {
       throw _handleError(e);
     } catch (e) {
       throw Exception("register failed: ${e.toString()}");
@@ -57,18 +62,36 @@ class AuthService {
   }
 
   Future<bool> login(LoginRequest request) async {
+    await init();
     try {
       final response = await _dio.post(
         '$baseUrl/v1/login',
         data: request.toJson(),
         options: Options(
           sendTimeout: const Duration(seconds: 20),
-          receiveTimeout: const Duration(seconds: 20)
-        )
+          receiveTimeout: const Duration(seconds: 20),
+        ),
       );
 
-      return response.statusCode == 200;
-    } on DioException catch(e) {
+      if (response.statusCode == 200) {
+        final List<String>? rawCookies = response.headers['set-cookie'];
+        if (rawCookies != null) {
+          // 1. Parsing string menjadi Object Cookie
+          final List<Cookie> cookies = rawCookies.map((str) {
+            return Cookie.fromSetCookieValue(str);
+          }).toList();
+
+          // 2. Tentukan URI Host
+          final uri = Uri.parse(baseUrl);
+          
+          await _cookieJar?.saveFromResponse(uri, cookies);
+
+        }
+        return true;
+      }
+      return false;
+
+    } on DioException catch (e) {
       throw _handleError(e);
     } catch (e) {
       throw Exception("login failed: ${e.toString()}");
@@ -85,14 +108,70 @@ class AuthService {
     }
   }
 
+  Future<DashboardData> getDashboard() async {
+    await init();
+    try {
+      // Ganti endpoint sesuai backend Anda
+      final response = await _dio.get('$baseUrl/v1/dashboard');
+      print("🔍 RAW DASHBOARD JSON: ${response.data}");
+      return DashboardData.fromJson(response.data);
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  Future<List<DepositChannel>> getDepositChannels() async {
+    await init();
+    try {
+      // Sesuaikan endpoint backend Anda
+      final response = await _dio.get('$baseUrl/v1/deposit/channels');
+      
+      // Ambil wrapper 'data' sesuai kontrak JSON
+      final List<dynamic> list = response.data['data'] ?? [];
+      
+      return list.map((e) => DepositChannel.fromJson(e)).toList();
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  // 2. GET ADDRESS (Mocking/Real)
+  // Karena Anda belum memberi kontrak API address, saya buat logic:
+  // Jika backend sudah siap, uncomment bagian API call.
+  // Untuk sekarang, kita return dummy address agar UI bisa ditest.
+  Future<DepositAddress> getDepositAddress(String channelId) async {
+    await init();
+    
+    // --- OPSI A: JIKA BACKEND SUDAH ADA ---
+    /*
+    try {
+      final response = await _dio.get(
+        '$baseUrl/v1/deposit/address',
+        queryParameters: {'id': channelId},
+      );
+      return DepositAddress.fromJson(response.data);
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+    */
+
+    // --- OPSI B: DUMMY DATA (Agar UI tidak error saat testing) ---
+    await Future.delayed(Duration(seconds: 1)); // Simulasi loading
+    return DepositAddress(
+      address: "0x71C7656EC7ab88b098defB751B7401B5f6d8976F", 
+      network: "$channelId Network",
+      memo: null,
+    );
+  }
+
   Future<void> logout() async {
-     await init();
-     // Hapus semua cookie
-     await _cookieJar?.deleteAll();
+    await init();
+    // Hapus semua cookie
+    await _cookieJar?.deleteAll();
   }
 
   String _handleError(DioException e) {
-    switch(e.type) {
+    switch (e.type) {
       case DioExceptionType.connectionTimeout:
       case DioExceptionType.sendTimeout:
       case DioExceptionType.receiveTimeout:
@@ -110,8 +189,8 @@ class AuthService {
         }
 
         return "bad request";
-        default:
-          return "something error";
+      default:
+        return "something error";
     }
   }
 }

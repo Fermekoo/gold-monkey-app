@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:gold_monkey/core/theme/app_theme.dart';
 import 'package:gold_monkey/viewmodels/auth_viewmodel.dart';
+import 'package:gold_monkey/viewmodels/dashboard_viewmodel.dart';
+import 'package:gold_monkey/viewmodels/deposit_viewmodel.dart';
+import 'package:gold_monkey/viewmodels/page_viewmodel.dart';
 import 'package:gold_monkey/viewmodels/profile_viewmodel.dart';
 import 'package:gold_monkey/views/login_screen.dart';
 import 'package:provider/provider.dart';
@@ -16,6 +19,9 @@ class GoldMonkeyApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => AuthViewmodel()),
         ChangeNotifierProvider(create: (_) => ProfileViewmodel()),
+        ChangeNotifierProvider(create: (_) => DashboardViewModel()),
+        ChangeNotifierProvider(create: (_) => DepositViewModel()),
+        ChangeNotifierProvider(create: (_) => PageViewModel())
       ],
       child: MaterialApp(
         title: "Gold Monkey",

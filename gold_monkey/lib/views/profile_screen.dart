@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:gold_monkey/core/constants/app_colors.dart';
 import 'package:gold_monkey/viewmodels/profile_viewmodel.dart';
+import 'package:gold_monkey/views/login_screen.dart';
 import 'package:gold_monkey/views/widgets/glass_container.dart';
+import 'package:gold_monkey/views/widgets/profile_ava.dart';
 import 'package:provider/provider.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -50,7 +52,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 child: Column(
                   children: [
                     SizedBox(height: size.height * 0.12),
-                    _buildProfilePicture(profileVM.user?.avaURL),
+                    ProfileVatar(url: profileVM.user?.avaURL ?? "https://i.pravatar.cc/300"),
                     SizedBox(height: 16),
                     Text(
                       profileVM.user?.username ?? "User",
@@ -80,8 +82,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
-                        onPressed: () {
-                          Navigator.pop(context);
+                        onPressed: () async {
+                          await Provider.of<ProfileViewmodel>(context, listen: false).logout();
+                          if (!context.mounted) return;
+
+                          Navigator.pushAndRemoveUntil(context, 
+                          MaterialPageRoute(builder: (context) => LoginScreen()),
+                          (Route<dynamic> route) => false,
+                          );
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.redAccent.withValues(alpha: 0.8),
@@ -92,39 +100,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ],
                 ),
               )
-      ),
-    );
-  }
-
-  // Widget Helper untuk Foto Profile dengan Border Glow
-  Widget _buildProfilePicture(String? url) {
-    return Container(
-      padding: EdgeInsets.all(4), // Jarak border
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        // Efek gradient border
-        gradient: LinearGradient(
-          colors: [AppColors.primary, Colors.purpleAccent],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.primary.withOpacity(0.5),
-            blurRadius: 20,
-            spreadRadius: 2,
-          )
-        ],
-      ),
-      child: CircleAvatar(
-        radius: 60,
-        backgroundColor: AppColors.background,
-        backgroundImage: (url != null && url.isNotEmpty) 
-            ? NetworkImage(url) 
-            : null,
-        child: (url == null || url.isEmpty)
-            ? Icon(Icons.person, size: 60, color: Colors.white54)
-            : null,
       ),
     );
   }

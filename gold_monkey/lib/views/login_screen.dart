@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:gold_monkey/core/constants/app_colors.dart';
 import 'package:gold_monkey/viewmodels/auth_viewmodel.dart';
-import 'package:gold_monkey/views/profile_screen.dart';
+import 'package:gold_monkey/views/main/main_screen.dart';
 import 'package:gold_monkey/views/register_screen.dart';
 import 'package:gold_monkey/views/widgets/glass_container.dart';
 import 'package:gold_monkey/views/widgets/glass_text_field.dart';
@@ -85,12 +85,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
                                   if (!context.mounted) return;
                                   if (success) {
-                                    // ScaffoldMessenger.of(context).showSnackBar(
-                                    //   SnackBar(content: Text("Login success")),
-                                    // );
                                     Navigator.pushReplacement(
                                       context,
-                                      MaterialPageRoute(builder: (context) => ProfileScreen()),
+                                      MaterialPageRoute(builder: (context) => MainScreen()),
                                     );
                                   } else {
                                     ScaffoldMessenger.of(context).showSnackBar(
