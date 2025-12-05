@@ -3,11 +3,14 @@ import 'dart:io';
 import 'package:cookie_jar/cookie_jar.dart';
 import 'package:dio/dio.dart';
 import 'package:dio_cookie_manager/dio_cookie_manager.dart';
+import 'package:flutter/material.dart';
+import 'package:gold_monkey/core/utils/nav_key.dart';
 import 'package:gold_monkey/data/models/deposit_model.dart';
 import 'package:gold_monkey/data/models/login_model.dart';
 import 'package:gold_monkey/data/models/register_model.dart';
 import 'package:gold_monkey/data/models/user_model.dart';
 import 'package:gold_monkey/data/models/wallet_model.dart';
+import 'package:gold_monkey/views/login_screen.dart';
 import 'package:path_provider/path_provider.dart';
 
 class AuthService {
@@ -28,17 +31,37 @@ class AuthService {
     Directory appDocDir = await getApplicationDocumentsDirectory();
     String appDocPath = appDocDir.path;
 
-    _cookieJar = PersistCookieJar(
-      storage: FileStorage("$appDocPath/.cookies/"),
-    );
+    _cookieJar = PersistCookieJar(storage: FileStorage("$appDocPath/.cookies/"));
+    
+    _dio.interceptors.clear();
 
     _dio.interceptors.add(CookieManager(_cookieJar!));
 
     _dio.interceptors.add(
-      LogInterceptor(
-        requestBody: true,
-        responseBody: true,
+      InterceptorsWrapper(
+        onError: (DioException e, ErrorInterceptorHandler handler) async {
+         
+          if (e.response?.statusCode == 401) {
+            print("🚨 SESSION EXPIRED (401) DETECTED! LOGGING OUT...");
+            
+           
+            await _cookieJar?.deleteAll();
+
+            
+            navigatorKey.currentState?.pushAndRemoveUntil(
+              MaterialPageRoute(builder: (context) => LoginScreen()),
+              (route) => false, 
+            );
+          }
+      
+          return handler.next(e); 
+        },
       ),
+    );
+
+    // 3. Log Interceptor (Untuk Debugging)
+    _dio.interceptors.add(
+      LogInterceptor(request: true, responseBody: true, error: true),
     );
   }
 
@@ -76,12 +99,10 @@ class AuthService {
       if (response.statusCode == 200) {
         final List<String>? rawCookies = response.headers['set-cookie'];
         if (rawCookies != null) {
-          // 1. Parsing string menjadi Object Cookie
           final List<Cookie> cookies = rawCookies.map((str) {
             return Cookie.fromSetCookieValue(str);
           }).toList();
 
-          // 2. Tentukan URI Host
           final uri = Uri.parse(baseUrl);
           
           await _cookieJar?.saveFromResponse(uri, cookies);
@@ -111,9 +132,7 @@ class AuthService {
   Future<DashboardData> getDashboard() async {
     await init();
     try {
-      // Ganti endpoint sesuai backend Anda
       final response = await _dio.get('$baseUrl/v1/dashboard');
-      print("🔍 RAW DASHBOARD JSON: ${response.data}");
       return DashboardData.fromJson(response.data);
     } on DioException catch (e) {
       throw _handleError(e);
@@ -123,10 +142,7 @@ class AuthService {
   Future<List<DepositChannel>> getDepositChannels() async {
     await init();
     try {
-      // Sesuaikan endpoint backend Anda
       final response = await _dio.get('$baseUrl/v1/deposit/channels');
-      
-      // Ambil wrapper 'data' sesuai kontrak JSON
       final List<dynamic> list = response.data['data'] ?? [];
       
       return list.map((e) => DepositChannel.fromJson(e)).toList();
@@ -135,38 +151,53 @@ class AuthService {
     }
   }
 
-  // 2. GET ADDRESS (Mocking/Real)
-  // Karena Anda belum memberi kontrak API address, saya buat logic:
-  // Jika backend sudah siap, uncomment bagian API call.
-  // Untuk sekarang, kita return dummy address agar UI bisa ditest.
-  Future<DepositAddress> getDepositAddress(String channelId) async {
+  Future<DepositAddress> getDepositAddress(String assetCode) async {
     await init();
     
-    // --- OPSI A: JIKA BACKEND SUDAH ADA ---
-    /*
     try {
-      final response = await _dio.get(
+      final response = await _dio.post(
         '$baseUrl/v1/deposit/address',
-        queryParameters: {'id': channelId},
+        data: {
+          'asset': assetCode, 
+        },
+      
+        options: Options(
+          sendTimeout: const Duration(seconds: 30),
+          receiveTimeout: const Duration(seconds: 30),
+        ),
       );
-      return DepositAddress.fromJson(response.data);
-    } on DioException catch (e) {
-      throw _handleError(e);
-    }
-    */
 
-    // --- OPSI B: DUMMY DATA (Agar UI tidak error saat testing) ---
-    await Future.delayed(Duration(seconds: 1)); // Simulasi loading
-    return DepositAddress(
-      address: "0x71C7656EC7ab88b098defB751B7401B5f6d8976F", 
-      network: "$channelId Network",
-      memo: null,
-    );
+      return DepositAddress.fromJson(response.data);
+    }on DioException catch (e) {
+      throw _handleError(e); 
+    }
+  }
+
+Future<bool> checkSessionValidity() async {
+    await init();
+    
+    
+    final uri = Uri.parse(baseUrl);
+    final cookies = await _cookieJar?.loadForRequest(uri);
+    if (cookies == null || cookies.isEmpty) return false;
+
+    try {
+      final response = await _dio.get('$baseUrl/v1/profile');
+    
+      if (response.data is Map && response.data['data'] == null) {
+    
+        print("⚠️ Response 200 tapi data kosong. Anggap Invalid.");
+        return false;
+      }
+
+      return response.statusCode == 200;
+    } catch (e) {
+      return false;
+    }
   }
 
   Future<void> logout() async {
     await init();
-    // Hapus semua cookie
     await _cookieJar?.deleteAll();
   }
 

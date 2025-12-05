@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:gold_monkey/core/constants/app_colors.dart';
+import 'package:gold_monkey/core/utils/app_formatters.dart';
 import 'package:gold_monkey/viewmodels/dashboard_viewmodel.dart';
 import 'package:gold_monkey/viewmodels/page_viewmodel.dart';
-import 'package:gold_monkey/views/deposit_screen.dart';
-import 'package:gold_monkey/views/profile_screen.dart';
 import 'package:gold_monkey/views/widgets/glass_container.dart';
 import 'package:gold_monkey/views/widgets/profile_ava.dart';
 import 'package:provider/provider.dart';
-import 'package:intl/intl.dart'; // Add dependency: intl: ^0.18.0
 
 
 class DashboardScreen extends StatefulWidget {
@@ -27,7 +25,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   Widget build(BuildContext context) {
     final vm = Provider.of<DashboardViewModel>(context);
-    final currencyFormatter = NumberFormat.currency(locale: 'en_US', symbol: '\$');
 
     return Scaffold(
       body: Container(
@@ -77,7 +74,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             SizedBox(height: 8),
                             Text(
                               vm.dashboardData != null 
-                                  ? currencyFormatter.format(vm.dashboardData!.totalBalanceUsd)
+                                  ? AppFormatters.crypto(vm.dashboardData!.totalBalanceUsd)
                                   : "\$0.00",
                               style: TextStyle(
                                 color: Colors.white, 
@@ -135,14 +132,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                     // Idealnya gunakan Image.network(wallet.iconUrl)
                                   ),
                                   title: Text(wallet.name, style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                                  subtitle: Text("${wallet.balance} ${wallet.code}", style: TextStyle(color: AppColors.textSecondary)),
+                                  subtitle: Text("${AppFormatters.crypto(wallet.balance)} ${wallet.code}", style: TextStyle(color: AppColors.textSecondary)),
                                   trailing: Column(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     crossAxisAlignment: CrossAxisAlignment.end,
                                     children: [
-                                      Text(currencyFormatter.format(wallet.value), style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                                      Text(AppFormatters.currency(wallet.value), style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                                       Text(
-                                        "${currencyFormatter.format(wallet.price)}", // Harga satuan
+                                        "${AppFormatters.currency(wallet.price)}", // Harga satuan
                                         style: TextStyle(color: Colors.greenAccent, fontSize: 12),
                                       ),
                                     ],
@@ -172,7 +169,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
-              color: AppColors.primary.withOpacity(0.3),
+              color: AppColors.primary.withValues(alpha: 0.3),
               blurRadius: 8,
               offset: Offset(0, 4),
             )

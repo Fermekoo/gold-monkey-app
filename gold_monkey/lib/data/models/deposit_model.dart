@@ -34,7 +34,7 @@ class DepositAddress {
     final data = json['data'] ?? json;
     return DepositAddress(
       address: data['address'] ?? '',
-      network: data['network'] ?? '',
+      network: data['asset'] ?? '',
       memo: data['memo'],
     );
   }

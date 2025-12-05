@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:gold_monkey/core/theme/app_theme.dart';
+import 'package:gold_monkey/core/utils/nav_key.dart';
 import 'package:gold_monkey/viewmodels/auth_viewmodel.dart';
 import 'package:gold_monkey/viewmodels/dashboard_viewmodel.dart';
 import 'package:gold_monkey/viewmodels/deposit_viewmodel.dart';
 import 'package:gold_monkey/viewmodels/page_viewmodel.dart';
 import 'package:gold_monkey/viewmodels/profile_viewmodel.dart';
-import 'package:gold_monkey/views/login_screen.dart';
+import 'package:gold_monkey/views/splash_screen.dart';
 import 'package:provider/provider.dart';
 
 void main() {
@@ -24,10 +25,11 @@ class GoldMonkeyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => PageViewModel())
       ],
       child: MaterialApp(
+        navigatorKey: navigatorKey,
         title: "Gold Monkey",
         debugShowCheckedModeBanner: false,
         theme: AppTheme.darkTheme,
-        home: LoginScreen(),
+        home: const SplashScreen(),
       ),
     );
   }
